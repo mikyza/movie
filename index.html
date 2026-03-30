@@ -1,100 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Movie Upload 🎬</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MovieBox | Premium Streaming</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #e50914; /* Netflix Red */
+      --bg: #0a0a0a;
+      --card-bg: #1a1a1a;
+      --text: #ffffff;
+    }
+
     body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      text-align: center;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
     }
 
-    h1 {
-      margin-top: 20px;
-    }
-
-    form {
-      margin: 20px;
-    }
-
-    button {
-      padding: 10px 20px;
-      background: #22c55e;
-      border: none;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #16a34a;
-    }
-
-    .video-container {
+    /* Header & Navigation */
+    header {
+      padding: 20px 5%;
       display: flex;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      color: var(--primary);
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    /* Upload Section */
+    .upload-zone {
+      background: var(--card-bg);
+      margin: 40px 5%;
+      padding: 30px;
+      border-radius: 12px;
+      border: 2px dashed #333;
+      transition: border-color 0.3s;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--primary);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .custom-upload {
+      padding: 12px 24px;
+      background: var(--primary);
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    /* Movie Grid */
+    .section-title {
+      margin: 20px 5%;
+      font-size: 1.5rem;
+    }
+
+    .movie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 0 5% 50px 5%;
+    }
+
+    .movie-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .movie-card:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+
+    .poster-placeholder {
+      width: 100%;
+      aspect-ratio: 2/3;
+      background: #222;
+      display: flex;
+      align-items: center;
       justify-content: center;
+      font-size: 3rem;
+    }
+
+    .movie-info {
+      padding: 12px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.9));
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .movie-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Player Modal */
+    #playerModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
     }
 
     video {
-      margin: 10px;
-      border-radius: 10px;
-      border: 2px solid #1e293b;
+      width: 90%;
+      max-width: 1000px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 2rem;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-<h1>🎬 Upload & Watch Movies</h1>
-<p>Upload up to 5 movies</p>
+<header>
+  <div class="logo">MOVIEBOX</div>
+  <div id="status">Ready to stream</div>
+</header>
 
-<form id="uploadForm">
-  <input type="file" name="movies" multiple accept="video/*" required>
-  <br><br>
-  <button type="submit">Upload Movies</button>
-</form>
+<div class="upload-zone">
+  <h2>Add to your Library</h2>
+  <p>Select up to 5 video files to populate your private MovieBox.</p>
+  <form id="uploadForm">
+    <label class="custom-upload">
+      <input type="file" id="fileInput" multiple accept="video/*">
+      Choose Files
+    </label>
+    <button type="submit" style="background:none; border: 1px solid white; color:white; padding: 11px 20px; border-radius:4px; margin-left:10px; cursor:pointer;">
+      Upload Now
+    </button>
+  </form>
+</div>
 
-<div class="video-container" id="videos"></div>
+<h3 class="section-title">Continue Watching</h3>
+<div class="movie-grid" id="movieGrid">
+  </div>
+
+<div id="playerModal">
+  <span class="close-btn" onclick="closePlayer()">&times;</span>
+  <video id="mainPlayer" controls></video>
+</div>
 
 <script>
 const form = document.getElementById('uploadForm');
-const container = document.getElementById('videos');
+const grid = document.getElementById('movieGrid');
+const modal = document.getElementById('playerModal');
+const player = document.getElementById('mainPlayer');
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  const files = document.getElementById('fileInput').files;
 
-  const files = document.querySelector('input[type="file"]').files;
-
+  if (files.length === 0) return;
   if (files.length > 5) {
-    alert("Max 5 movies allowed!");
+    alert("Please limit uploads to 5 movies at a time.");
     return;
   }
 
   const formData = new FormData();
-
   for (let file of files) {
     formData.append('movies', file);
   }
 
-  const res = await fetch('/upload', {
-    method: 'POST',
-    body: formData
-  });
-
-  const data = await res.json();
-
-  container.innerHTML = '';
-
-  data.forEach(file => {
-    const video = document.createElement('video');
-    video.src = file.url;
-    video.controls = true;
-    video.width = 300;
-
-    container.appendChild(video);
-  });
+  // Assuming your backend /upload returns an array of {url: '...', name: '...'}
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    renderMovies(data);
+  } catch (err) {
+    console.error("Upload failed", err);
+    // Mock for demo if backend isn't running:
+    // renderMovies([{url: '#', name: 'Interstellar'}, {url: '#', name: 'The Dark Knight'}]);
+  }
 });
+
+function renderMovies(movies) {
+  grid.innerHTML = '';
+  movies.forEach(movie => {
+    const card = document.createElement('div');
+    card.className = 'movie-card';
+    card.onclick = () => openPlayer(movie.url);
+    
+    card.innerHTML = `
+      <div class="poster-placeholder">🎬</div>
+      <div class="movie-info">
+        <div class="movie-title">${movie.name || 'Untitled Movie'}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function openPlayer(url) {
+  player.src = url;
+  modal.style.display = 'flex';
+  player.play();
+}
+
+function closePlayer() {
+  modal.style.display = 'none';
+  player.pause();
+  player.src = "";
+}
 </script>
 
 </body>
