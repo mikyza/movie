@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Movie Upload 🎬</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    form {
+      margin: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #22c55e;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #16a34a;
+    }
+
+    .video-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    video {
+      margin: 10px;
+      border-radius: 10px;
+      border: 2px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎬 Upload & Watch Movies</h1>
+<p>Upload up to 5 movies</p>
+
+<form id="uploadForm">
+  <input type="file" name="movies" multiple accept="video/*" required>
+  <br><br>
+  <button type="submit">Upload Movies</button>
+</form>
+
+<div class="video-container" id="videos"></div>
+
+<script>
+const form = document.getElementById('uploadForm');
+const container = document.getElementById('videos');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const files = document.querySelector('input[type="file"]').files;
+
+  if (files.length > 5) {
+    alert("Max 5 movies allowed!");
+    return;
+  }
+
+  const formData = new FormData();
+
+  for (let file of files) {
+    formData.append('movies', file);
+  }
+
+  const res = await fetch('/upload', {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = await res.json();
+
+  container.innerHTML = '';
+
+  data.forEach(file => {
+    const video = document.createElement('video');
+    video.src = file.url;
+    video.controls = true;
+    video.width = 300;
+
+    container.appendChild(video);
+  });
+});
+</script>
+
+</body>
+</html>
